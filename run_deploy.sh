@@ -1,0 +1,12 @@
+######################################################################################################
+# To install this package:
+# pip install --extra-index-url=https://nexus.smeir.io/repository/pypi-hosted/simple spam-detector
+######################################################################################################
+
+mkdir -p hateSpeechDetect/pretrained
+rsync -rL checkpoints/ hateSpeechDetect/pretrained/
+
+python3 setup.py sdist bdist_wheel
+rm -r build hateSpeechDetector.egg-info
+twine upload --repository-url=https://nexus.smeir.io/repository/pypi-hosted/ dist/* --username=dwshin
+rm -r dist

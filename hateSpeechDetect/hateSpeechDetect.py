@@ -1,13 +1,12 @@
 import os, sys, re, itertools, glob, time, random
-import emoji
 from urllib.parse import urlparse
 from datetime import datetime
-from scipy.special import softmax
 import numpy as np
-import tensorflow as tf
+# import tensorflow as tf
 from transformers import AutoModel, BertTokenizerFast, TrainingArguments, Trainer, BertForSequenceClassification
-from .utils import *
+# from .utils import *
 import torch
+import pkg_resources
 import demoji
 demoji.download_codes()
 
@@ -116,7 +115,6 @@ class HateSpeechDetector(object):
         model.compile(optimizer=optimizer, loss=cce_loss, metrics=[cata])
 
         return model
-    '''
 
     def train(self, ckpt_name, num_epochs=None, batch_size=128, steps_per_epoch=1000, quiet=False, log=False):
         if self._train_generator is None:
@@ -148,6 +146,7 @@ class HateSpeechDetector(object):
             verbose=verbose,
             initial_epoch=(self.initial_epoch - 1),
             callbacks=callback_list)
+    '''
     
     def predict(self, org_tweets, return_probs=False):
 
@@ -181,11 +180,12 @@ class HateSpeechDetector(object):
         return hate_tweets, offensive_tweets, normal_tweets
 
     def from_pretrained(self, ckpt_dir):
-        full_path = os.path.join(self.root_dir, ckpt_dir)
-        
-        print(full_path)
-        if os.path.exists(full_path):
-            fpath = full_path
+        path_lookup = pkg_resources.resource_filename(__name__, 'pretrained') 
+        # print('Checking for checkpoint at: {}'.format(path_lookup))
+        if os.path.exists(path_lookup):
+            fpath = path_lookup
+        elif os.path.exists(ckpt_file):
+            fpath = ckpt_file
         else:
             raise Exception('No such file exists: {}'.format(ckpt_dir))
 
