@@ -9,11 +9,9 @@ import torch
 import pkg_resources
 import demoji
 demoji.download_codes()
-
-ws_cleaner = re.compile(r'\s+', re.MULTILINE)
-url_cleaner = re.compile(r'(?:http|www\.)\S+')
-mention_cleaner = re.compile(r'\@[A-Za-z0-9_]+')
-hashtag_cleaner = re.compile(r'\#[A-Za-z0-9_]+')
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 #  Create The Dataset Class.
 class TheDataset(torch.utils.data.Dataset):
@@ -60,14 +58,6 @@ class HateSpeechDetector(object):
 
         self.tokenizer = tokenizer
         self.bert_model = bert_model
-        self.model = self.bert_model
-
-        self.categories = [0,1,2]
-
-        self._train_generator = None
-        self._tune_generator = None
-        self._dev_generator = None
-        self._test_generator = None
 
     '''
     def build_model(self, training_mode=False, fixed_encoder=False):
@@ -115,7 +105,51 @@ class HateSpeechDetector(object):
         model.compile(optimizer=optimizer, loss=cce_loss, metrics=[cata])
 
         return model
+    '''
 
+    def train(self, trainfile_name, valid_ratio, ckpt_name, num_epochs=10, batch_size=128, steps_per_epoch=1000, quiet=False, log=False):
+        df = pd.read_csv(trainfile_name, sep='\t')
+        df = df.dropna()
+        # split train dataset into train, validation and test sets
+        train_text, valid_text, train_labels, valid_labels = train_test_split(df['text'], df['label'],
+                                                                    random_state=2018,
+                                                                    test_size=valid_ratio,
+                                                                    stratify=df['label'])
+
+        train_dataset = TheDataset(
+            texts    = train_text.tolist(),
+            values = train_labels.tolist(),
+            tokenizer  = self.tokenizer,
+        )
+
+        valid_dataset = TheDataset(
+            texts    = valid_text.tolist(),
+            values = valid_labels.tolist(),
+            tokenizer  = self.tokenizer,
+        )
+
+        training_args = TrainingArguments(
+            output_dir                  = ckpt_name,
+            num_train_epochs            = num_epochs,
+            per_device_train_batch_size = batch_size,
+            per_device_eval_batch_size  = batch_size,
+            warmup_steps                = 500,
+            weight_decay                = 0.01,
+            save_strategy               = "epoch",
+            evaluation_strategy         = "steps"
+        )
+
+        trainer = Trainer(
+            model           = self.bert_model,
+            args            = training_args,
+            train_dataset   = train_dataset,
+            eval_dataset    = valid_dataset,
+            compute_metrics = _compute_metrics
+        )
+
+        trainer.train()
+
+    '''
     def train(self, ckpt_name, num_epochs=None, batch_size=128, steps_per_epoch=1000, quiet=False, log=False):
         if self._train_generator is None:
             raise Exception('Must set data pointer before training!')
@@ -149,7 +183,6 @@ class HateSpeechDetector(object):
     '''
     
     def predict(self, org_tweets, return_probs=False):
-
         processed_text = HateSpeechDetector._preprocess_text(org_tweets)
         # print("self.bert_model : ", self.bert_model)
         trainer = Trainer( model  = self.bert_model)
@@ -179,15 +212,13 @@ class HateSpeechDetector(object):
 
         return hate_tweets, offensive_tweets, normal_tweets
 
-    def from_pretrained(self, ckpt_dir):
+    def from_pretrained(self):
         path_lookup = pkg_resources.resource_filename(__name__, 'pretrained') 
         # print('Checking for checkpoint at: {}'.format(path_lookup))
         if os.path.exists(path_lookup):
             fpath = path_lookup
-        elif os.path.exists(ckpt_file):
-            fpath = ckpt_file
         else:
-            raise Exception('No such file exists: {}'.format(ckpt_dir))
+            raise Exception('No such file exists: {}'.format(fpath))
 
         print('Checking for checkpoint at: {}'.format(fpath))
         bert_model = BertForSequenceClassification.from_pretrained(fpath)
@@ -222,3 +253,16 @@ class HateSpeechDetector(object):
 
             newtweets.append(text)
         return newtweets
+
+    @staticmethod
+    def _compute_metrics(pred):
+        labels = pred.label_ids
+        preds = pred.predictions.argmax(-1)
+        precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='macro')
+        acc = accuracy_score(labels, preds)
+        return {
+            'accuracy': acc,
+            'f1': f1,
+            'precision': precision,
+            'recall': recall
+        }
