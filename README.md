@@ -4,7 +4,8 @@ This package detects hate speech and offeisive Tweets using BERT model. Given a 
 
 ## Requirements
 
-* torch==1.9.1
+* torch==1.7.1+cu101
+* torchvision==0.8.2+cu101
 * transformers==4.6.1
 * numpy>=1.18.5
 * demoji>=1.1.0
@@ -14,7 +15,9 @@ This package detects hate speech and offeisive Tweets using BERT model. Given a 
 To install the package from nexus, use:
 
 ~~bash
-pip install --extra-index-url=https://nexus.smeir.io/repository/pypi-hosted/simple hateSpeechDetect==1.0
+
+pip install --extra-index-url=https://nexus.smeir.io/repository/pypi-hosted/simple hateSpeechDetect==1.0 -f https://download.pytorch.org/whl/torch_stable.html
+
 ~~
 
 ## Usage 
