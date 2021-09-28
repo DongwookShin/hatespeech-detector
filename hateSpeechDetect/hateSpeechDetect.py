@@ -53,7 +53,6 @@ class HateSpeechDetector(object):
         self.root_dir = root_dir
         self.max_length = max_length
         self.learning_rate = learning_rate
-        self.base_weights = 'bert-base-uncased'
         self.initial_epoch = 0
 
         self.tokenizer = tokenizer
@@ -212,7 +211,8 @@ class HateSpeechDetector(object):
 
         return hate_tweets, offensive_tweets, normal_tweets
 
-    def from_pretrained(self):
+    @staticmethod
+    def from_pretrained():
         path_lookup = pkg_resources.resource_filename(__name__, 'pretrained') 
         # print('Checking for checkpoint at: {}'.format(path_lookup))
         if os.path.exists(path_lookup):
@@ -222,7 +222,7 @@ class HateSpeechDetector(object):
 
         print('Checking for checkpoint at: {}'.format(fpath))
         bert_model = BertForSequenceClassification.from_pretrained(fpath)
-        tokenizer = BertTokenizerFast.from_pretrained(self.base_weights)
+        tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
         return HateSpeechDetector(bert_model=bert_model,tokenizer=tokenizer)
 
     @staticmethod
