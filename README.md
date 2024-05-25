@@ -12,13 +12,8 @@ This package detects hate speech and offeisive Tweets using BERT model. Given a 
 
 ## Installation
 
-To install the package from nexus, use:
+$ python setup.py install
 
-~~bash
-
-pip install --extra-index-url=https://nexus.smeir.io/repository/pypi-hosted/simple hateSpeechDetect==1.0 -f https://download.pytorch.org/whl/torch_stable.html
-
-~~
 
 ## Usage 
 
@@ -74,5 +69,5 @@ Macro-averaged average prevision: 80.6%
 
 ~~
 Author: DW Shin
-Email: dwshin@idsinternational.com
+Email: dongwookshin@hotmail.com
 ~~

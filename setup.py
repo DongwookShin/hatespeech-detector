@@ -7,7 +7,7 @@ setup(
     name="hateSpeechDetect",
     version="1.0",
     author="DW Shin",
-    author_email="dwshin@idsinternational.com",
+    author_email="dongwookshin@hotmail.com",
     description="Tool for social media hate speech detection",
     long_description=long_description,
     long_description_content_type="text",
